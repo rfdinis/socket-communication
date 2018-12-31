@@ -45,7 +45,7 @@ int sock_multicast(sfd_t s, const char* ipgroup){
 
 int sock_listen(sfd_t s, int len){
     int ret = listen(s,len);
-    assert(ret==0);
+    assert(ret>=0);
     return ret;
 }
 
@@ -57,6 +57,62 @@ sfd_t sock_connect(sfd_t s, addr_t addr){
 
 int sock_bind(sfd_t s, addr_t addr){
     int ret = bind(s,(struct sockaddr*)&addr, sizeof(addr));
-    assert(ret==0);
+    assert(ret>=0);
     return ret;
+}
+
+sfd_t sock_accept(sfd_t s, addr_t addr){
+    int len = sizeof(addr);
+    sfd_t s2 = accept(s, (struct sockaddr*)&addr, &len);
+    assert(s2>=0);
+    return s2;
+}
+
+int sock_send(sfd_t s, uint8_t* bytes, int size){
+    int ret = 0;
+    int inc = 0;
+    for(int i = 0; i < size; i += inc){
+
+        inc = send(s, bytes+i ,size-i, 0);
+
+        if (inc < 0){
+            ret = inc;
+            assert(0);
+            break;
+        }
+    }
+    return ret;
+}
+
+int sock_receive(sfd_t s, uint8_t* bytes, int size){
+    int ret = 0;
+    int inc = 0;
+    for(int i = 0; i < size; i += inc){
+
+        inc = recv(s, bytes + i, size-i, 0);
+        
+        if (inc < 0){
+            ret = inc;
+            assert(0);
+            break;
+        }
+    }
+    return ret;
+}
+
+int sock_receivefrom(sfd_t s, uint8_t* buffer, int size, addr_t addr){
+    int addr_len = sizeof(addr);
+    int ret = recvfrom(s,buffer,size,0,(struct sockaddr*)&addr,&addr_len);
+    assert(ret>=0);
+    return ret;
+}
+
+int sock_sendto(sfd_t s, uint8_t* bytes, int size, addr_t addr){
+    int ret = sendto(s,bytes,size,0,(struct sockaddr*)&addr,sizeof(addr));
+    assert(ret>=0);
+    return ret;
+}
+
+int sock_shut(sfd_t s){
+    return shutdown(s,SHUT_RDWR);
 }
