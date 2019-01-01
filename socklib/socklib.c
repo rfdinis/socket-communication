@@ -61,9 +61,9 @@ int sock_bind(sfd_t s, addr_t addr){
     return ret;
 }
 
-sfd_t sock_accept(sfd_t s, addr_t addr){
-    int len = sizeof(addr);
-    sfd_t s2 = accept(s, (struct sockaddr*)&addr, &len);
+sfd_t sock_accept(sfd_t s, addr_t* client){
+    int len = sizeof(addr_t);
+    sfd_t s2 = accept(s, (struct sockaddr*)&client, &len);
     assert(s2>=0);
     return s2;
 }

@@ -9,7 +9,7 @@
 #include <ctype.h>
 
 typedef int     sfd_t;              /* socket type */
-typedef struct  sockaddr_in addr_t; /* address type */
+typedef struct sockaddr_in addr_t; /* address type */
 
 /********************General Purppose**************************/
 sfd_t sock_tcp(void);
@@ -25,7 +25,7 @@ int sock_receive(sfd_t s, uint8_t* bytes, int size);
 /*Passive*/
 int sock_bind(sfd_t s, addr_t addr);
 int sock_listen(sfd_t s, int len);
-sfd_t sock_accept(sfd_t s, addr_t addr);
+sfd_t sock_accept(sfd_t s, addr_t* client);
 
 /*Active*/
 sfd_t sock_connect(sfd_t s, addr_t addr);
