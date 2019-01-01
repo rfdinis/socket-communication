@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <assert.h>
 
+#include <stdio.h>
 #include "socklib.h"
 
 sfd_t sock_tcp(void){
@@ -22,13 +23,13 @@ addr_t sock_addr(const char* ip, int port){
     addr_t addr = {0};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    inet_pton(AF_INET,ip,&addr);
+    inet_pton(AF_INET,ip,&addr.sin_addr);
     return addr;
 }
 
 int sock_reuse(sfd_t s){
     int what = 1;
-    int ret  = setsockopt(s,IPPROTO_IP, IP_ADD_MEMBERSHIP, &what, sizeof(what));
+    int ret  = setsockopt(s,SOL_SOCKET, SO_REUSEADDR, &what, sizeof(what));
     assert(ret>=0);
     return ret;
 }
@@ -62,7 +63,7 @@ int sock_bind(sfd_t s, addr_t addr){
 }
 
 sfd_t sock_accept(sfd_t s, addr_t* client){
-    int len = sizeof(addr_t);
+    socklen_t len = sizeof(addr_t);
     sfd_t s2 = accept(s, (struct sockaddr*)&client, &len);
     assert(s2>=0);
     return s2;
@@ -77,7 +78,7 @@ int sock_send(sfd_t s, uint8_t* bytes, int size){
 
         if (inc < 0){
             ret = inc;
-            assert(0);
+            assert(inc < 0);
             break;
         }
     }
@@ -90,7 +91,7 @@ int sock_receive(sfd_t s, uint8_t* bytes, int size){
     for(int i = 0; i < size; i += inc){
 
         inc = recv(s, bytes + i, size-i, 0);
-        
+        printf("%d\n",inc);
         if (inc < 0){
             ret = inc;
             assert(0);

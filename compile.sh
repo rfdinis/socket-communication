@@ -1,4 +1,4 @@
-flags='-Wall'
+flags='-g -Wall'
 include='-Isocklib/Include/'
 libs='-L./socklib/lib'
 
