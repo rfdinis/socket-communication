@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <assert.h>
+#include <unistd.h>
 
 #include <stdio.h>
 #include "socklib.h"
@@ -35,13 +36,14 @@ int sock_reuse(sfd_t s){
 }
 
 int sock_multicast(sfd_t s, const char* ipgroup){
-    struct ip_mreq mreq;
-    
-    inet_pton(AF_INET, ipgroup, &mreq.imr_multiaddr.s_addr);
-    inet_pton(AF_INET, ipgroup, &mreq.imr_multiaddr.s_addr);
-
-    int ret = setsockopt(s,IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
-    return ret;
+    	struct ip_mreq mreq;
+	inet_aton(ipgroup, &mreq.imr_multiaddr);
+	mreq.imr_interface.s_addr = INADDR_ANY;    
+	//inet_pton(AF_INET, ipgroup, &mreq.imr_multiaddr.s_addr);
+    	//inet_pton(AF_INET, ipgroup, &mreq.imr_multiaddr.s_addr);
+	
+    	int ret = setsockopt(s,IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
+    	return ret;
 }
 
 int sock_listen(sfd_t s, int len){
@@ -50,10 +52,10 @@ int sock_listen(sfd_t s, int len){
     return ret;
 }
 
-sfd_t sock_connect(sfd_t s, addr_t addr){
-    sfd_t s2 = connect(s, (struct sockaddr *)&addr, sizeof(addr));
-    assert(s2>=0);
-    return s2;
+int sock_connect(sfd_t s, addr_t addr){
+    int ret = connect(s, (struct sockaddr *)&addr, sizeof(addr));
+    assert(ret>=0);
+    return ret;
 }
 
 int sock_bind(sfd_t s, addr_t addr){
@@ -74,7 +76,7 @@ int sock_send(sfd_t s, uint8_t* bytes, int size){
     int inc = 0;
     for(int i = 0; i < size; i += inc){
 
-        inc = send(s, bytes+i ,size-i, 0);
+        inc = write(s, bytes+i ,size-i);
 
         if (inc < 0){
             ret = inc;
@@ -85,20 +87,17 @@ int sock_send(sfd_t s, uint8_t* bytes, int size){
     return ret;
 }
 
-int sock_receive(sfd_t s, uint8_t* bytes, int size){
-    int ret = 0;
-    int inc = 0;
-    for(int i = 0; i < size; i += inc){
-
-        inc = recv(s, bytes + i, size-i, 0);
-        printf("%d\n",inc);
-        if (inc < 0){
-            ret = inc;
-            assert(0);
-            break;
+int sock_receive(sfd_t s, uint8_t* buffer, int size){
+    long bytes_read;
+    for (long pos = 0; pos < size; pos += bytes_read) {
+        bytes_read = read(s, buffer + pos, size - pos);
+        
+        if (bytes_read <= 0) {
+            return 0;
         }
     }
-    return ret;
+    
+    return 1;
 }
 
 int sock_receivefrom(sfd_t s, uint8_t* buffer, int size, addr_t addr){
