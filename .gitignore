@@ -1,3 +1,7 @@
-server
-client
-.vscode
+**/server
+**/client
+**/.vscode
+**/producer
+**/consumer
+**/monitor
+**/target
