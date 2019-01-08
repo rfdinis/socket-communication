@@ -33,7 +33,7 @@ int main(int argc, char* argv[]){
     int port = 4321;
     uint8_t id = 0;
     int T = 500;     /*milliseconds*/
-    int delay = 100; /*milliseconds*/
+    int delay = 10; /*milliseconds*/
 
     if(argc >= 6){
         strcpy(ip,argv[1]);
@@ -118,10 +118,11 @@ int main(int argc, char* argv[]){
             usleep(delay*1000);
             sendto(sendSock,election,sizeof(election),0,(struct sockaddr*)&addr,sizeof(addr));
             printf("Sent: %s\n",election);
+            leaderid=id;
             state = ELECTION;
             gettimeofday(&tvgoal,&tzgoal);
-            tv.tv_sec = 0;
-            tv.tv_usec = 2*T*1000;
+            tv.tv_sec = (2*T*1000)/1000000;
+            tv.tv_usec = (2*T*1000)%1000000;
             timeradd(&tvgoal,&tv,&tvgoal);
 
         case ELECTION: //check if new leader with lower id arrived
@@ -134,6 +135,7 @@ int main(int argc, char* argv[]){
                 printf("Received: %s\n",buffer);
             }
             if(leaderid<id){
+                printf("Giving up election");
                 state = NOTCANDIDATE;
             }
             else if(leaderid > id){
@@ -164,7 +166,8 @@ int main(int argc, char* argv[]){
         case STALEMATE: //waits for new election start, if the new candidate is more powerful, skips to NOTCANDIDATE
             rbytes = recvfrom(recvSock,buffer,sizeof(election),0,(struct sockaddr*) &addr,&slen);
 
-            if(rbytes==sizeof(election) && buffer[0]==election[0]){
+            if(rbytes>0 && buffer[0]==election[0]){
+                printf("starting new election...\n");
                 sscanf(buffer,"E%02x",&leaderid);
                 state = (id<leaderid) ? START : NOTCANDIDATE;
             }
