@@ -27,46 +27,20 @@ enum bullyState{
     NOTCANDIDATE
 };
 
-void add_time(struct timezone *tz, struct timeval *tv, uint ms){
-
-    tv->tv_usec = tv->tv_usec + ms*1000;
-    if(tv->tv_usec >= 1000000){
-        tv->tv_usec=0;
-        tv->tv_sec++;
-    }
-    if(tv->tv_sec>=60){
-        tv->tv_sec=0;
-        tz->tz_minuteswest++;
-    }
-}
-
-int reachedGoal(struct timezone *tz, struct timeval *tv, struct timezone *goalz, struct timeval *goalv){
-    if(tz->tz_minuteswest > goalz->tz_minuteswest)
-        return 1;
-    if(tz->tz_minuteswest < goalz->tz_minuteswest)
-        return 0;
-    if(tv->tv_sec > goalv->tv_sec)
-        return 1;
-    if(tv->tv_sec < goalv->tv_sec)
-        return 0;
-    if(tv->tv_usec >= goalv->tv_usec)
-        return 1;
-    else return 0;
-}
-
 int main(int argc, char* argv[]){
 
     char ip[16] = "225.0.0.37";
     int port = 4321;
     uint8_t id = 0;
-    int T = 100;     /*milliseconds*/
-    int delay = 500; /*milliseconds*/
+    int T = 500;     /*milliseconds*/
+    int delay = 100; /*milliseconds*/
 
-    if(argc >= 5){
+    if(argc >= 6){
         strcpy(ip,argv[1]);
         port = atol(argv[2]);
-        T = atol(argv[3]);
-        delay = atol(argv[4]);
+        id = atol(argv[3]);
+        T = atol(argv[4]);
+        delay = atol(argv[5]);
     }
     else{ printf("Could use: ./bully <ip> <port> <id> <T_ms> <delay_ms>"); }
 
@@ -146,12 +120,14 @@ int main(int argc, char* argv[]){
             printf("Sent: %s\n",election);
             state = ELECTION;
             gettimeofday(&tvgoal,&tzgoal);
-            add_time(&tzgoal,&tvgoal,2*T);
+            tv.tv_sec = 0;
+            tv.tv_usec = 2*T*1000;
+            timeradd(&tvgoal,&tv,&tvgoal);
 
         case ELECTION: //check if new leader with lower id arrived
             rbytes = recvfrom(recvSock,buffer,sizeof(election),0,(struct sockaddr*) &addr,&slen);
             gettimeofday(&tv,&tz);
-            goal = reachedGoal(&tz,&tv,&tzgoal,&tvgoal);
+            goal = timercmp(&tv,&tvgoal,>=);
 
             if(rbytes == sizeof(election)){
                 sscanf(buffer,"E%02x",&leaderid);
