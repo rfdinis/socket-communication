@@ -11,7 +11,7 @@ int main(){
     struct sockaddr_in addr;
     addr.sin_family=AF_INET;
     addr.sin_port=htons(4321);
-    inet_pton(AF_INET,"0.0.0.0", (struct sockaddr*)&addr.sin_addr);
+    inet_pton(AF_INET,"225.0.0.37", (struct sockaddr*)&addr.sin_addr);
 
     int optval=1;
     setsockopt(s,SOL_SOCKET,SO_REUSEADDR,&optval,sizeof(optval));
